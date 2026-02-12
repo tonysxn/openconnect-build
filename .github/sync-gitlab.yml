@@ -1,0 +1,42 @@
+name: Sync from GitLab
+
+on:
+  # Запуск по расписанию (каждые 12 часов)
+  schedule:
+    - cron: '0 */12 * * *'
+  # Кнопка для ручного запуска (если не терпится)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Важно: скачиваем всю историю, чтобы Git не ругался
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+
+      - name: Sync with Upstream (GitLab)
+        run: |
+          # 1. Добавляем оригинальный репозиторий как 'upstream'
+          git remote add upstream https://gitlab.com/openconnect/openconnect.git
+          
+          # 2. Скачиваем изменения
+          git fetch upstream
+
+          # 3. Переключаемся на ветку master (у OpenConnect основная ветка master)
+          git checkout master
+
+          # 4. Жестко сбрасываем ваш репозиторий до состояния GitLab
+          # ВНИМАНИЕ: Это удалит ваши изменения в коде OpenConnect, если вы их делали!
+          # Но для чистого зеркала это то, что нужно.
+          git reset --hard upstream/master
+
+          # 5. Отправляем изменения к вам на GitHub
+          git push origin master --force

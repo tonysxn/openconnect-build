@@ -1,0 +1,6 @@
+name: Build Binaries
+
+on:
+  push:
+    branches: [ "master" ] # Запускать, когда обновляется ветка master
+  workflow_dispatch:
