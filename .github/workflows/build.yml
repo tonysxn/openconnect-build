@@ -1,6 +1,89 @@
-name: Build Binaries
+name: Build OpenConnect
 
 on:
   push:
-    branches: [ "master" ] # Запускать, когда обновляется ветка master
+    branches: [ "master" ]
   workflow_dispatch:
+
+jobs:
+  # --- СБОРКА ПОД LINUX ---
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config \
+          libxml2-dev libssl-dev liblz4-dev zlib1g-dev \
+          gettext autoconf automake libtool
+
+      - name: Configure and Build
+        run: |
+          ./autogen.sh
+          ./configure --with-vpnc-script=/etc/vpnc/vpnc-script
+          make
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openconnect-linux
+          path: openconnect
+          if-no-files-found: error
+
+  # --- СБОРКА ПОД WINDOWS (Cross-compile) ---
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install MinGW (Windows Cross-compiler)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 build-essential pkg-config \
+          libxml2-dev libssl-dev liblz4-dev zlib1g-dev \
+          gettext autoconf automake libtool
+
+      - name: Configure and Build (Windows)
+        run: |
+          ./autogen.sh
+          # Указываем, что собираем для Windows 64-bit
+          ./configure --host=x86_64-w64-mingw32 --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static"
+          make
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openconnect-windows
+          path: openconnect.exe
+          if-no-files-found: error
+
+  # --- СБОРКА ПОД MACOS ---
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies (macOS)
+        run: |
+          brew install automake autoconf libtool pkg-config \
+          libxml2 openssl lz4 zstd gettext
+
+      - name: Configure and Build
+        run: |
+          ./autogen.sh
+          # На Mac нужно указать пути к библиотекам OpenSSL, так как Apple использует свои версии
+          export LDFLAGS="-L/usr/local/opt/openssl@3/lib"
+          export CPPFLAGS="-I/usr/local/opt/openssl@3/include"
+          export PKG_CONFIG_PATH="/usr/local/opt/openssl@3/lib/pkgconfig"
+          
+          ./configure --with-vpnc-script=/usr/local/etc/vpnc-script
+          make
+
+      - name: Upload macOS Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openconnect-macos
+          path: openconnect
+          if-no-files-found: error
