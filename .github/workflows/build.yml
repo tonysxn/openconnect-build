@@ -28,13 +28,27 @@ jobs:
           chmod +x vpnc-script
           
           ./autogen.sh
-          # LDFLAGS="-static" собирает полностью статический бинарник
-          # PKG_CONFIG="pkg-config --static" для получения флагов статических библиотек
+          # LDFLAGS="-static" для gcc
+          # PKG_CONFIG="pkg-config --static" для получения флагов зависимостей
+          # Добавляем LDFLAGS для libtool, чтобы он не линковал .so
+          export LDFLAGS="-static"
+          
+          # Явно задаем XML2_LIBS, чтобы не подцепился .so из pkg-config по умолчанию
+          # (хотя --static должен помочь, перестрахуемся)
+          XML2_LIBS=$(pkg-config --libs --static libxml-2.0)
+          
           ./configure --with-vpnc-script=./vpnc-script \
-            LDFLAGS="-static" \
             PKG_CONFIG="pkg-config --static" \
-            --disable-shared
-          make
+            XML2_LIBS="$XML2_LIBS" \
+            --disable-shared \
+            --enable-static
+            
+          # Добавляем -all-static в make, это флаг libtool
+          make LDFLAGS="-all-static"
+          
+          # Проверяем, что получилось
+          file openconnect
+          ldd openconnect || true
 
       - name: Upload Linux Binary
         uses: actions/upload-artifact@v4
