@@ -58,6 +58,7 @@ jobs:
             mingw-w64-x86_64-lz4
             mingw-w64-x86_64-zstd
             mingw-w64-x86_64-gettext
+            mingw-w64-x86_64-jq
             autotools
             automake-wrapper
 
