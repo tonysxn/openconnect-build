@@ -2,7 +2,7 @@ name: Build OpenConnect
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
   workflow_dispatch:
 
 jobs:
