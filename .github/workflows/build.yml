@@ -74,11 +74,16 @@ jobs:
         run: |
           ./autogen.sh
           # На Mac нужно указать пути к библиотекам OpenSSL, так как Apple использует свои версии
-          export LDFLAGS="-L/usr/local/opt/openssl@3/lib"
-          export CPPFLAGS="-I/usr/local/opt/openssl@3/include"
-          export PKG_CONFIG_PATH="/usr/local/opt/openssl@3/lib/pkgconfig"
+          # Используем brew --prefix для поддержки как Intel, так и Apple Silicon
+          OPENSSL_PREFIX=$(brew --prefix openssl@3)
+          export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
+          export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
+          export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
           
-          ./configure --with-vpnc-script=/usr/local/etc/vpnc-script
+          # vpnc-script тоже может быть в разных местах
+          VPNC_SCRIPT=$(brew --prefix)/etc/vpnc-script
+          
+          ./configure --with-vpnc-script=${VPNC_SCRIPT}
           make
 
       - name: Upload macOS Binary
