@@ -106,6 +106,7 @@ jobs:
           files: |
             artifacts/openconnect-linux/openconnect
             artifacts/openconnect-windows/openconnect.exe
+            artifacts/openconnect-windows/vpnc-script-win.js
             artifacts/openconnect-macos/openconnect
           draft: false
           prerelease: false
