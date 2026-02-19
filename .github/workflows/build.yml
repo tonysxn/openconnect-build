@@ -63,6 +63,10 @@ jobs:
 
       - name: Configure and Build (Windows)
         run: |
+          # Fix configure.ac syntax error (missing brackets in AC_CONFIG_FILES)
+          sed -i 's/AC_CONFIG_FILES(/AC_CONFIG_FILES([/' configure.ac
+          sed -i 's/tests\/configs\/test-user-pass.config)/tests\/configs\/test-user-pass.config])/' configure.ac
+          
           ./autogen.sh
           # Указываем, что собираем для Windows 64-bit
           ./configure --with-vpnc-script=vpnc-script-win.js
