@@ -140,7 +140,8 @@ jobs:
           VPNC_SCRIPT=$(brew --prefix)/etc/vpnc-script
           
           # --disable-shared чтобы libopenconnect была вшита внутрь, и не требовала dylib
-          ./configure --with-vpnc-script=${VPNC_SCRIPT} --disable-shared
+          # LIBS="-framework PCSC" нужен для разрешения символов PCSC (Yubikey) при статической линковке
+          ./configure --with-vpnc-script=${VPNC_SCRIPT} --disable-shared LIBS="-framework PCSC"
           make
 
       - name: Upload macOS Binary
