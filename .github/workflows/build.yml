@@ -72,7 +72,8 @@ jobs:
           ./autogen.sh
           # Указываем, что собираем для Windows 64-bit
           # LDFLAGS="-static" нужен для того, чтобы не тащить за собой DLL
-          ./configure --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static"
+          # OPENSSL_LIBS нужен для того, чтобы configure увидел статические зависимости (ws2_32 и т.д.)
+          ./configure --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static" OPENSSL_LIBS="$(pkg-config --libs --static openssl)"
           make
 
       - name: Upload Windows Binary
