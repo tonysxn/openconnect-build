@@ -69,15 +69,19 @@ jobs:
           sed -i 's/tests\/configs\/test-user-pass.config)/tests\/configs\/test-user-pass.config])/' configure.ac
           
           ./autogen.sh
+          ./autogen.sh
           # Указываем, что собираем для Windows 64-bit
-          ./configure --with-vpnc-script=vpnc-script-win.js
+          # LDFLAGS="-static" нужен для того, чтобы не тащить за собой DLL
+          ./configure --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static"
           make
 
       - name: Upload Windows Binary
         uses: actions/upload-artifact@v4
         with:
           name: openconnect-windows
-          path: .libs/openconnect.exe
+          path: |
+            .libs/openconnect.exe
+            vpnc-script-win.js
           if-no-files-found: error
 
   # --- СОЗДАНИЕ РЕЛИЗА ---
