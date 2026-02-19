@@ -23,18 +23,26 @@ jobs:
 
       - name: Configure and Build
         run: |
+          # Скачиваем vpnc-script
+          curl -O https://gitlab.com/openconnect/vpnc-scripts/-/raw/master/vpnc-script
+          chmod +x vpnc-script
+          
           ./autogen.sh
-          ./configure --with-vpnc-script=/etc/vpnc/vpnc-script
+          # LDFLAGS="-static" собирает полностью статический бинарник
+          # Указываем путь к vpnc-script, который будет лежать рядом
+          ./configure --with-vpnc-script=./vpnc-script LDFLAGS="-static"
           make
 
       - name: Upload Linux Binary
         uses: actions/upload-artifact@v4
         with:
           name: openconnect-linux
-          path: .libs/openconnect
+          path: |
+            openconnect
+            vpnc-script
           if-no-files-found: error
-
-  # --- СБОРКА ПОД WINDOWS (native MSYS2) ---
+ 
+   # --- СБОРКА ПОД WINDOWS (native MSYS2) ---
   build-windows:
     runs-on: windows-latest
     defaults:
@@ -102,9 +110,9 @@ jobs:
       - name: Rename binaries for release
         run: |
           mkdir release_assets
-          # Linux (dynamic build, likely in .libs if directory structure preserved, or root if flat)
-          # We check finds to be safe/flexible
+          # Linux (static build, root)
           find artifacts/openconnect-linux -name "openconnect" -type f -exec cp {} release_assets/openconnect-linux \;
+          find artifacts/openconnect-linux -name "vpnc-script" -type f -exec cp {} release_assets/vpnc-script \;
           
           # macOS (static build, root)
           find artifacts/openconnect-macos -name "openconnect" -type f -exec cp {} release_assets/openconnect-macos \;
@@ -122,6 +130,7 @@ jobs:
           tag_name: latest
           files: |
             release_assets/openconnect-linux
+            release_assets/vpnc-script
             release_assets/openconnect-windows.exe
             release_assets/vpnc-script-win.js
             release_assets/openconnect-macos
