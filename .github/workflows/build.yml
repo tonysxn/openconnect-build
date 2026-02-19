@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openconnect-linux
-          path: openconnect
+          path: .libs/openconnect
           if-no-files-found: error
 
   # --- СБОРКА ПОД WINDOWS (native MSYS2) ---
@@ -77,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openconnect-windows
-          path: openconnect.exe
+          path: .libs/openconnect.exe
           if-no-files-found: error
 
   # --- СОЗДАНИЕ РЕЛИЗА ---
@@ -141,5 +141,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openconnect-macos
-          path: openconnect
+          path: .libs/openconnect
           if-no-files-found: error
