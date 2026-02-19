@@ -34,26 +34,38 @@ jobs:
           path: openconnect
           if-no-files-found: error
 
-  # --- СБОРКА ПОД WINDOWS (Cross-compile) ---
+  # --- СБОРКА ПОД WINDOWS (native MSYS2) ---
   build-windows:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v3
         with:
           ref: master
 
-      - name: Install MinGW (Windows Cross-compiler)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 build-essential pkg-config \
-          libxml2-dev libssl-dev liblz4-dev zlib1g-dev \
-          gettext autoconf automake libtool
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libxml2
+            mingw-w64-x86_64-lz4
+            mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-gettext
+            autotools
+            automake-wrapper
 
       - name: Configure and Build (Windows)
         run: |
           ./autogen.sh
           # Указываем, что собираем для Windows 64-bit
-          ./configure --host=x86_64-w64-mingw32 --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static"
+          ./configure --with-vpnc-script=vpnc-script-win.js
           make
 
       - name: Upload Windows Binary
@@ -62,6 +74,34 @@ jobs:
           name: openconnect-windows
           path: openconnect.exe
           if-no-files-found: error
+
+  # --- СОЗДАНИЕ РЕЛИЗА ---
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Latest Build
+          tag_name: latest
+          files: |
+            artifacts/openconnect-linux/openconnect
+            artifacts/openconnect-windows/openconnect.exe
+            artifacts/openconnect-macos/openconnect
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # --- СБОРКА ПОД MACOS ---
   build-macos:
