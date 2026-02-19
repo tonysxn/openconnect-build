@@ -50,6 +50,10 @@ jobs:
           # Проверяем, что получилось
           file openconnect
           ldd openconnect || true
+          
+          # Уменьшаем размер (strip)
+          strip openconnect
+          file openconnect
 
       - name: Upload Linux Binary
         uses: actions/upload-artifact@v4
@@ -96,11 +100,21 @@ jobs:
           
           ./autogen.sh
           ./autogen.sh
-          # Указываем, что собираем для Windows 64-bit
-          # LDFLAGS="-static" нужен для того, чтобы не тащить за собой DLL
-          # OPENSSL_LIBS нужен для того, чтобы configure увидел статические зависимости (ws2_32 и т.д.)
-          ./configure --with-vpnc-script=vpnc-script-win.js LDFLAGS="-static" OPENSSL_LIBS="$(pkg-config --libs --static openssl)"
+          # LDFLAGS="-static" для gcc
+          # PKG_CONFIG="pkg-config --static" для получения флагов зависимостей (ws2_32)
+          # --disable-shared --enable-static ОБЯЗАТЕЛЬНО для создания .exe, который не зависит от libopenconnect.dll
+          ./configure --with-vpnc-script=vpnc-script-win.js \
+            LDFLAGS="-static" \
+            OPENSSL_LIBS="$(pkg-config --libs --static openssl)" \
+            --disable-shared \
+            --enable-static
           make
+          
+          # Проверяем зависимости (должен быть статическим или зависеть только от системных DLL)
+          ldd openconnect.exe || true
+          
+          # Стрипаем для уменьшения размера
+          strip openconnect.exe
 
       - name: Upload Windows Binary
         uses: actions/upload-artifact@v4
@@ -183,10 +197,20 @@ jobs:
           # vpnc-script тоже может быть в разных местах
           VPNC_SCRIPT=$(brew --prefix)/etc/vpnc-script
           
-          # --disable-shared чтобы libopenconnect была вшита внутрь, и не требовала dylib
+          # --disable-shared --enable-static чтобы libopenconnect была вшита внутрь
           # LIBS="-framework PCSC" нужен для разрешения символов PCSC (Yubikey) при статической линковке
-          ./configure --with-vpnc-script=${VPNC_SCRIPT} --disable-shared LIBS="-framework PCSC"
+          ./configure --with-vpnc-script=${VPNC_SCRIPT} \
+            --disable-shared \
+            --enable-static \
+            LIBS="-framework PCSC"
           make
+          
+          # Проверяем зависимости (otool -L на macOS аналог ldd)
+          otool -L openconnect
+          
+          # Стрипаем
+          strip openconnect
+          ls -lh openconnect
 
       - name: Upload macOS Binary
         uses: actions/upload-artifact@v4
