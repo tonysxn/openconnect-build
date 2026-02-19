@@ -81,7 +81,7 @@ jobs:
         with:
           name: openconnect-windows
           path: |
-            .libs/openconnect.exe
+            openconnect.exe
             vpnc-script-win.js
           if-no-files-found: error
 
@@ -99,16 +99,32 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
+      - name: Rename binaries for release
+        run: |
+          mkdir release_assets
+          # Linux (dynamic build, likely in .libs if directory structure preserved, or root if flat)
+          # We check finds to be safe/flexible
+          find artifacts/openconnect-linux -name "openconnect" -type f -exec cp {} release_assets/openconnect-linux \;
+          
+          # macOS (static build, root)
+          find artifacts/openconnect-macos -name "openconnect" -type f -exec cp {} release_assets/openconnect-macos \;
+          
+          # Windows (static build, root)
+          find artifacts/openconnect-windows -name "openconnect.exe" -type f -exec cp {} release_assets/openconnect-windows.exe \;
+          find artifacts/openconnect-windows -name "vpnc-script-win.js" -type f -exec cp {} release_assets/vpnc-script-win.js \;
+          
+          ls -R release_assets
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: Latest Build
           tag_name: latest
           files: |
-            artifacts/openconnect-linux/openconnect
-            artifacts/openconnect-windows/openconnect.exe
-            artifacts/openconnect-windows/vpnc-script-win.js
-            artifacts/openconnect-macos/openconnect
+            release_assets/openconnect-linux
+            release_assets/openconnect-windows.exe
+            release_assets/vpnc-script-win.js
+            release_assets/openconnect-macos
           draft: false
           prerelease: false
         env:
