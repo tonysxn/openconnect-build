@@ -139,7 +139,8 @@ jobs:
           # vpnc-script тоже может быть в разных местах
           VPNC_SCRIPT=$(brew --prefix)/etc/vpnc-script
           
-          ./configure --with-vpnc-script=${VPNC_SCRIPT}
+          # --disable-shared чтобы libopenconnect была вшита внутрь, и не требовала dylib
+          ./configure --with-vpnc-script=${VPNC_SCRIPT} --disable-shared
           make
 
       - name: Upload macOS Binary
