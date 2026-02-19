@@ -28,9 +28,12 @@ jobs:
           chmod +x vpnc-script
           
           ./autogen.sh
-          # LDFLAGS="-static" собирает полностью статический бинарник
-          # Указываем путь к vpnc-script, который будет лежать рядом
-          ./configure --with-vpnc-script=./vpnc-script LDFLAGS="-static"
+          # LDFLAGS="-static -all-static" для libtool
+          # PKG_CONFIG="pkg-config --static" для получения флагов статических библиотек
+          ./configure --with-vpnc-script=./vpnc-script \
+            LDFLAGS="-static -all-static" \
+            PKG_CONFIG="pkg-config --static" \
+            --disable-shared
           make
 
       - name: Upload Linux Binary
