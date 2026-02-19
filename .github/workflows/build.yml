@@ -28,10 +28,10 @@ jobs:
           chmod +x vpnc-script
           
           ./autogen.sh
-          # LDFLAGS="-static -all-static" для libtool
+          # LDFLAGS="-static" собирает полностью статический бинарник
           # PKG_CONFIG="pkg-config --static" для получения флагов статических библиотек
           ./configure --with-vpnc-script=./vpnc-script \
-            LDFLAGS="-static -all-static" \
+            LDFLAGS="-static" \
             PKG_CONFIG="pkg-config --static" \
             --disable-shared
           make
